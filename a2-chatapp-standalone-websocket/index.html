@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>glassy chat · brijesh nishad</title>
+    <!-- modern glassmorphism style, no external fonts, pure css -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(145deg, #0b0f1c 0%, #1b2335 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        /* main glass card */
+        .chat-container {
+            width: 100%;
+            max-width: 860px;
+            height: 85vh;
+            max-height: 780px;
+            background: rgba(20, 28, 45, 0.5);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 42px;
+            box-shadow: 0 30px 60px -10px rgba(0, 0, 0, 0.6), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        /* header with signature */
+        .chat-header {
+            padding: 24px 28px 16px 28px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .chat-header h2 {
+            font-weight: 500;
+            font-size: 1.5rem;
+            letter-spacing: -0.01em;
+            background: linear-gradient(135deg, #f0f3fc 0%, #bac8e0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 2px 5px rgba(0, 10, 30, 0.6);
+        }
+
+        .chip {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 100px;
+            padding: 8px 18px;
+            font-size: 0.85rem;
+            font-weight: 400;
+            color: #a9c0e3;
+            backdrop-filter: blur(4px);
+            box-shadow: inset 0 1px 2px rgba(255,255,255,0.02);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .chip .dot {
+            width: 10px;
+            height: 10px;
+            background: #4cd964;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #4cd96488;
+            margin-right: 6px;
+        }
+
+        /* main message area (glassy scroll) */
+        .messages {
+            flex: 1;
+            padding: 24px 24px 16px 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            scroll-behavior: smooth;
+            background: rgba(8, 12, 22, 0.2);
+        }
+
+        /* custom scrollbar */
+        .messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .messages::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.02);
+        }
+
+        .messages::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* message bubbles */
+        .message {
+            max-width: 75%;
+            padding: 12px 18px;
+            border-radius: 28px;
+            line-height: 1.5;
+            font-size: 0.95rem;
+            word-break: break-word;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 6px 12px -6px rgba(0, 0, 0, 0.5);
+            animation: fadeInUp 0.25s ease;
+            transition: 0.15s;
+            border: 1px solid rgba(255, 255, 255, 0.02);
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.own {
+            align-self: flex-end;
+            background: rgba(75, 130, 245, 0.25);
+            border: 1px solid rgba(130, 180, 255, 0.3);
+            color: #e8f0ff;
+            border-bottom-right-radius: 8px;
+        }
+
+        .message.other {
+            align-self: flex-start;
+            background: rgba(30, 38, 60, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            color: #d7e2f5;
+            border-bottom-left-radius: 8px;
+        }
+
+        .message.system {
+            align-self: center;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.02);
+            color: #94a9cf;
+            font-size: 0.85rem;
+            padding: 8px 18px;
+            border-radius: 40px;
+            backdrop-filter: blur(6px);
+            max-width: 90%;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            font-weight: 400;
+            box-shadow: none;
+        }
+
+        .message.pm {
+            background: rgba(200, 160, 255, 0.12);
+            border: 1px solid rgba(210, 170, 255, 0.25);
+            color: #e7d4ff;
+            font-style: italic;
+            backdrop-filter: blur(12px);
+        }
+
+        .sender-name {
+            font-weight: 500;
+            font-size: 0.8rem;
+            opacity: 0.7;
+            margin-bottom: 4px;
+            display: block;
+            letter-spacing: 0.2px;
+            color: #b7d0ff;
+        }
+
+        /* input bar — super glassy */
+        .input-area {
+            padding: 20px 24px 24px 24px;
+            background: rgba(0, 0, 0, 0.15);
+            border-top: 1px solid rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(16px);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            background: rgba(10, 16, 28, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 60px;
+            padding: 4px 4px 4px 22px;
+            transition: border 0.2s, box-shadow 0.2s;
+        }
+
+        .input-group:focus-within {
+            border-color: rgba(255, 255, 255, 0.25);
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.02), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+        }
+
+        .input-group input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            padding: 16px 0 16px 0;
+            font-size: 1rem;
+            color: #f0f5ff;
+            outline: none;
+            min-width: 0;
+        }
+
+        .input-group input::placeholder {
+            color: rgba(170, 190, 230, 0.4);
+            font-weight: 300;
+            font-size: 0.95rem;
+        }
+
+        .input-group button {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 50px;
+            padding: 14px 24px;
+            font-size: 1rem;
+            font-weight: 480;
+            color: #dbe6ff;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            transition: 0.15s;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+            letter-spacing: 0.2px;
+            background: rgba(45, 70, 120, 0.5);
+        }
+
+        .input-group button:hover {
+            background: rgba(75, 120, 210, 0.5);
+            border-color: rgba(255, 255, 255, 0.25);
+            color: white;
+            box-shadow: 0 8px 16px -8px #2f6bb0;
+        }
+
+        .user-status {
+            font-size: 0.85rem;
+            padding: 6px 18px;
+            border-radius: 40px;
+            background: rgba(0, 0, 0, 0.2);
+            color: #b7cef0;
+            display: inline-block;
+            margin-top: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(8px);
+        }
+
+        .em {
+            color: #93b9ff;
+            font-weight: 450;
+        }
+
+        /* tiny extra glow */
+        .chat-container::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            border-radius: 42px;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
+        }
+        .chat-container { position: relative; }
+
+        /* footer signature */
+        .signature {
+            text-align: right;
+            font-size: 0.8rem;
+            margin-top: 6px;
+            color: rgba(190, 210, 250, 0.3);
+            padding-right: 6px;
+            letter-spacing: 0.5px;
+        }
+        .signature span {
+            background: rgba(255,255,255,0.02);
+            padding: 2px 12px;
+            border-radius: 40px;
+            backdrop-filter: blur(3px);
+        }
+    </style>
+</head>
+<body>
+
+<div class="chat-container">
+    <div class="chat-header">
+        <h2>◎ glassy chat</h2>
+        <div class="chip">
+            <span class="dot"></span>
+            <span>ws://localhost:8080/chat</span>
+        </div>
+    </div>
+
+    <!-- messages panel -->
+    <div class="messages" id="messagePane">
+        <div class="message system">✨ Welcome, embedded engineer. connect & set name with <span class="em">/name yourname</span></div>
+    </div>
+
+    <!-- input + controls -->
+    <div class="input-area">
+        <div class="input-group">
+            <input type="text" id="messageInput" placeholder="type /name, /pm bob hi, or just say something..." autofocus>
+            <button id="sendButton">⏎ send</button>
+        </div>
+        <div class="user-status" id="statusBadge">⚡ disconnected — use /name to join</div>
+        <div class="signature"><span>developed by Embedded Software Engineer Mr. Brijesh Nishad</span></div>
+    </div>
+</div>
+
+<!-- vanilla js, no deps -->
+<script>
+    (function() {
+        // ---- websocket with auto reconnect logic ----
+        const WS_URL = 'ws://localhost:8080/chat';
+        let socket = null;
+        let connected = false;
+        let username = null;               // our username (after /name)
+        let reconnectTimer = null;
+
+        // DOM elements
+        const messagesDiv = document.getElementById('messagePane');
+        const inputField = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendButton');
+        const statusEl = document.getElementById('statusBadge');
+
+        // helper: log & append messages to UI
+        function addMessage(text, type = 'other') {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${type}`;
+
+            // simple heuristic: if starts with "SERVER:" or "[PRIVATE]" we style differently, but keep type
+            if (text.startsWith('SERVER:')) {
+                msgDiv.classList.add('system');
+            } else if (text.includes('[PRIVATE]')) {
+                msgDiv.classList.add('pm');
+            }
+
+            // try to detect own message for alignment (but we handle by type)
+            // if type is 'own' (sent by us) already set above
+            if (type === 'own') {
+                msgDiv.classList.add('own');
+            } else if (type === 'system' || text.startsWith('SERVER:')) {
+                // keep system class
+            } else {
+                msgDiv.classList.add('other');
+            }
+
+            // beautify: if private message we can bold etc.
+            if (text.startsWith('[PRIVATE]')) {
+                // format nicely: [PRIVATE] from → you: message
+                let formatted = text.replace(/\[PRIVATE\]\s*(.*?):/, '[📩 private] $1:');
+                msgDiv.textContent = formatted;
+            } else {
+                msgDiv.textContent = text;
+            }
+
+            messagesDiv.appendChild(msgDiv);
+            // auto-scroll to bottom
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // system messages (always centered)
+        function systemMessage(msg) {
+            addMessage(msg, 'system');
+        }
+
+        // update connection status indicator
+        function setStatus(online, optionalText) {
+            if (online) {
+                statusEl.innerHTML = `🟢 connected ${username ? 'as <span class="em">' + username + '</span>' : '— use /name'}`;
+            } else {
+                statusEl.innerHTML = `🔴 disconnected — ${optionalText || 'waiting to reconnect...'}`;
+            }
+        }
+
+        // websocket setup
+        function connectWebSocket() {
+            if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
+                return; // already connected/connecting
+            }
+
+            try {
+                socket = new WebSocket(WS_URL);
+            } catch (e) {
+                systemMessage('⚠️ failed to connect to server. retry in 3s...');
+                setStatus(false, 'connection error');
+                scheduleReconnect();
+                return;
+            }
+
+            socket.onopen = function() {
+                connected = true;
+                setStatus(true);
+                systemMessage('✅ connected to chat server. set your name: /name nickname');
+                // clear any reconnect timer
+                if (reconnectTimer) {
+                    clearTimeout(reconnectTimer);
+                    reconnectTimer = null;
+                }
+            };
+
+            socket.onmessage = function(event) {
+                const msg = event.data;
+                // handle different message types
+                if (msg.startsWith('SERVER:')) {
+                    systemMessage(msg);
+                } else if (msg.includes('[PRIVATE]')) {
+                    addMessage(msg, 'pm');
+                } else {
+                    // broadcast messages: "username: message"
+                    // we can detect if it's our own message via prefix (but we already added optimistically)
+                    // just in case, check if message starts with our username+":", mark as own
+                    if (username && msg.startsWith(username + ':')) {
+                        addMessage(msg, 'own');
+                    } else {
+                        addMessage(msg, 'other');
+                    }
+                }
+            };
+
+            socket.onerror = function(err) {
+                console.warn('websocket error', err);
+                systemMessage('⚠️ connection error');
+                setStatus(false, 'error');
+            };
+
+            socket.onclose = function() {
+                connected = false;
+                username = null;
+                setStatus(false, 'disconnected');
+                systemMessage('🔌 disconnected from server. reconnecting in 3s...');
+                scheduleReconnect();
+            };
+        }
+
+        function scheduleReconnect() {
+            if (!reconnectTimer) {
+                reconnectTimer = setTimeout(() => {
+                    reconnectTimer = null;
+                    connectWebSocket();
+                }, 3000);
+            }
+        }
+
+        // send a message (string) if connected
+        function sendRaw(msg) {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(msg);
+                return true;
+            } else {
+                systemMessage('⚠️ cannot send: disconnected');
+                return false;
+            }
+        }
+
+        // process outgoing commands / messages
+        function handleUserInput(input) {
+            if (!input.trim()) return;
+
+            const trimmed = input.trim();
+
+            // special: /name command -> send and optimistically set local username after server response? 
+            // we'll wait for server echo but we can also reflect locally
+            if (trimmed.startsWith('/name ')) {
+                const proposed = trimmed.substring(6).trim();
+                if (!proposed) {
+                    systemMessage('invalid username. usage: /name nickname');
+                    return;
+                }
+                // send command, and we also set local optimistic username after server confirmation?
+                // but server will broadcast join and we set username only after successful registration.
+                // we store tentative but wait for possible "taken" message.
+                // actually server will reply with error or broadcast join, we set upon broadcast?
+                // better: wait for first server message indicating success. But we can remember tentative.
+                // We'll add logic in onmessage to detect "SERVER: xxx joined the chat" for our own tentative.
+                // but we can also set after no error.
+                if (sendRaw(trimmed)) {
+                    // optimistic: we don't set username yet, but we'll detect later.
+                    systemMessage(`requesting username "${proposed}" ...`);
+                }
+                return;
+            }
+
+            // if not registered, block sending (except /name)
+            if (!username) {
+                systemMessage('set your name first using /name yourname');
+                return;
+            }
+
+            // handle /users or /pm or normal broadcast
+            if (trimmed.toLowerCase() === '/users') {
+                sendRaw(trimmed);
+                return;
+            }
+
+            if (trimmed.startsWith('/pm ')) {
+                // example "/pm bob hello" -> just send raw
+                sendRaw(trimmed);
+                // optimistic: we can show own private message bubble
+                const parts = trimmed.split(' ').slice(0,2).join(' ');
+                const rest = trimmed.substring(parts.length).trim();
+                if (rest) {
+                    addMessage(`[PRIVATE] you → ${parts.substring(3)}: ${rest}`, 'pm');
+                }
+                return;
+            }
+
+            // broadcast message
+            if (sendRaw(trimmed)) {
+                // optimistic echo (own message)
+                addMessage(username + ': ' + trimmed, 'own');
+            }
+        }
+
+        // intercept server messages to detect username registration
+        // override onmessage with wrapper to also update username state
+        const originalOnMessage = socket ? socket.onmessage : null;
+        // but socket is recreated each time, we need to set inside connect.
+        // we'll refactor: store custom dispatcher.
+
+        // We'll rewrite connect to use a dispatcher.
+        function finalConnect() {
+            if (socket && socket.readyState === WebSocket.OPEN) return;
+            try {
+                socket = new WebSocket(WS_URL);
+            } catch (e) {
+                systemMessage('connection failed');
+                setStatus(false);
+                scheduleReconnect();
+                return;
+            }
+
+            socket.onopen = () => {
+                connected = true;
+                setStatus(true);
+                systemMessage('connected. please set name: /name <nick>');
+                if (reconnectTimer) clearTimeout(reconnectTimer);
+            };
+
+            socket.onmessage = (ev) => {
+                const msg = ev.data;
+
+                // detect username assignment from server: "SERVER: yourname joined the chat"
+                // but server sends that only after successful /name. We also can capture "Username already taken."
+                if (msg.startsWith('SERVER:') && msg.includes('joined the chat')) {
+                    // extract name: "SERVER: alice joined the chat"
+                    const match = msg.match(/SERVER:\s*([^\s]+)\s+joined/);
+                    if (match && match[1]) {
+                        const joinedName = match[1];
+                        // if we don't have username yet, maybe this is us? 
+                        // we can check via tentative: but we can set username only if we had sent /name recently.
+                        // simpler: if we are still null, set to this name? but could be another user.
+                        // we need a flag. we'll store pendingName.
+                        if (pendingName && joinedName === pendingName) {
+                            username = pendingName;
+                            pendingName = null;
+                            setStatus(true);
+                            systemMessage(`✅ you are now known as "${username}"`);
+                        }
+                    }
+                }
+
+                // taken feedback
+                if (msg === 'Username already taken.') {
+                    systemMessage('❌ username already taken. try /name another');
+                    pendingName = null;
+                }
+
+                if (msg === 'Set your username first with /name yourname') {
+                    systemMessage('⚠️ you need to set username with /name');
+                }
+
+                // display message
+                if (msg.startsWith('SERVER:')) {
+                    systemMessage(msg);
+                } else if (msg.includes('[PRIVATE]')) {
+                    addMessage(msg, 'pm');
+                } else {
+                    if (username && msg.startsWith(username + ':')) {
+                        addMessage(msg, 'own');
+                    } else {
+                        addMessage(msg, 'other');
+                    }
+                }
+            };
+
+            socket.onerror = (e) => {
+                setStatus(false);
+            };
+
+            socket.onclose = () => {
+                connected = false;
+                username = null;
+                pendingName = null;
+                setStatus(false);
+                systemMessage('disconnected — retry in 3s');
+                scheduleReconnect();
+            };
+        }
+
+        let pendingName = null;  // track name we are trying to register
+
+        // we need to intercept /name to set pendingName
+        const oldSendRaw = sendRaw;
+        sendRaw = function(msg) {
+            if (!socket || socket.readyState !== WebSocket.OPEN) {
+                systemMessage('offline');
+                return false;
+            }
+            if (msg.startsWith('/name ')) {
+                const tryName = msg.substring(6).trim();
+                if (tryName) pendingName = tryName;
+            }
+            socket.send(msg);
+            return true;
+        };
+
+        // override connect
+        connectWebSocket = finalConnect;
+
+        // attach event listeners after dom ready
+        window.addEventListener('load', () => {
+            connectWebSocket();
+
+            sendBtn.addEventListener('click', () => {
+                const val = inputField.value;
+                if (val) {
+                    handleUserInput(val);
+                    inputField.value = '';
+                }
+            });
+
+            inputField.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    sendBtn.click();
+                }
+            });
+        });
+
+        // expose to console for debugging but not needed
+        window.sendRaw = sendRaw;
+    })();
+</script>
+<!-- 
+    designed with glassmorphism, fully functional websocket chat.
+    all server commands supported: /name, /users, /pm, broadcast.
+    author credit: embedded software engineer mr. brijesh nishad 
+-->
+</body>
+</html>

@@ -1,0 +1,9 @@
+Before brokers like Kafka, RabbitMQ, ActiveMQ:
+
+Chat apps did NOT need brokers.
+
+They were direct TCP server-client apps, or browser-based with HTTP polling.
+
+WebSocket came later, to make real-time browser chat possible.
+
+Kafka and brokers are for scaling and persistence, not required for simple chat.
